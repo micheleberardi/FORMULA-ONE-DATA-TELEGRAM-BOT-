@@ -49,16 +49,7 @@ async def standing(event):
             ]
         )
 
-#@client.on(events.NewMessage(pattern="🏁 Result"))
-#async def result(event):
-#    print(event)
-#    await event.respond("Get result from:",
-#            buttons=[
-#                [Button.inline("📅 Previous GP", data="previous_gp"), Button.inline("📅 Previous Qualification", data="previous_q2")],
-#                [Button.inline("📅 Another GP(2022)", data="another_gp"), Button.inline("📅 Another Qualification(2022)", data="another_q1")],
-#
-#            ]
-#        )
+
 
 @client.on(events.NewMessage(pattern="👱🏼 Driver (by year)"))
 async def standing_info_select_year(event):
@@ -83,6 +74,20 @@ async def standing_constructor_select_by_year(event):
                 [Button.inline("📅 2015", data="constructorId2015"), Button.inline("📅 2014", data="constructorId2014")],
             ]
         )
+
+@client.on(events.NewMessage(pattern="🏎️ Constructor"))
+async def constructoronly(event):
+    async with cSession.get(f"{Config['api_url']}/constructorresults?year=2022&token={Config['api_token']}") as res:
+        json = await res.json()
+
+        countries = {(circuit_['name'], circuit_['constructorId']) for circuit_ in json}
+        print(countries)
+
+        buttons = [
+            Button.inline(name, f"constructor {constructorId}") for name, constructorId in countries
+        ]
+
+        await event.respond("🏎️ Constructor information:", buttons=list(chunks(buttons, 2)))
 
 @client.on(events.NewMessage(pattern="🏟️ Circuit"))
 async def circuit(event):
@@ -262,6 +267,28 @@ async def driver_info(event: events.CallbackQuery.Event, driver_id: int):
         await client.send_message(event.chat_id, message, force_document=False, buttons=[Button.url(f"{wanted_driver['forename']} {wanted_driver['surname']} Wiki", wanted_driver['url'])])
         await event.delete()
 
+
+async def constructorRef(event: events.CallbackQuery.Event, circuit_id: int):
+    async with cSession.get(f"{Config['api_url']}/constructorresults?year=2022&token={Config['api_token']}") as res:
+        json = await res.json()
+
+        wanted_circuit = None
+        for circuit in json:
+            if circuit['constructorId'] == circuit_id:
+                wanted_circuit = circuit
+
+        message  = f"🏎️ Constructor information for {wanted_circuit['name']}:\n\n"
+        message += f"🇨🇭 Nationality:: {wanted_circuit['nationality']}\n"
+        #message += f" Location: {wanted_circuit['country']}, {wanted_circuit['location']}\n"
+        message += f"📍 URL : {wanted_circuit['url']}\n"
+        #message += f"📏 Length: None\n"
+        #message += f"📐 Turns: None\n"
+        #message += f"🏟️ Capacity: None\n"
+        #await client.send_message(event.chat_id, message, file=TEMP_IMAGE_CIRCUIT, force_document=False, buttons=[Button.url(f"{wanted_circuit['name']} Wiki", wanted_circuit['url'])])
+        await client.send_message(event.chat_id, message, force_document=False, buttons=[Button.url(f"{wanted_circuit['name']} Wiki", wanted_circuit['url'])])
+        await event.delete()
+
+
 async def result_info(event: events.CallbackQuery.Event, circuit_id: int):
     #print(circuit_id)
     async with cSession.get(f"{Config['api_url']}/results?year=2022&token={Config['api_token']}") as res:
@@ -314,8 +341,10 @@ async def button_handler(event):
 
         case ["driver", driver_id]:
             await driver_info(event, int(driver_id))
+
         case ["circuit", circuit_id]:
             await circuit_info(event, int(circuit_id))
+
         case ["2021"]:
             await standing_info_by_year(event, int(data[0]))
         case ["2020"]:
@@ -373,6 +402,11 @@ async def button_handler(event):
         case ["constructorId2014"]:
             data = 2014
             await standing_constructor_by_year(event, int(data))
+
+        ###
+        case ["constructor", circuit_id]:
+            print("cazzo")
+            await constructorRef(event, int(circuit_id))
 
 
 async def main():
