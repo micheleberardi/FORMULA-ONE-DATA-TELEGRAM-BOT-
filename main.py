@@ -6,7 +6,7 @@ import asyncio
 import sys
 import re
 
-TEMP_IMAGE_DRIVER = "holand.png"
+TEMP_IMAGE_DRIVER = "monza.png"
 TEMP_IMAGE_CIRCUIT = "circuit_temp.jpg"
 DOB_IN_FORMAT = "%Y-%m-%d"
 DOB_OUT_FORMAT = "%d %B %Y"
@@ -46,7 +46,7 @@ async def start(event):
                   "🏎️ Constructor - Show info about constructor.\n " \
                   "🗓 Schedule - Get schedule \n" \
                   "💰F1 car cost  \n" \
-                  "📋 Live Feed  \n" \
+                  "📋 Telemetry  \n" \
                   "📻 Team Radio  \n"
     await event.respond(welcome_msg,
                         buttons=[
@@ -54,7 +54,7 @@ async def start(event):
                              Button.text("🏟️ Circuit", resize=True)],
                             [Button.text("👱🏼 Driver", resize=True), Button.text("🏎️ Constructor", resize=True),
                              Button.text("🗓 Schedule", resize=True)],
-                            [Button.text("💰 F1 car cost", resize=True), Button.text("📋 Live Feed", resize=True),
+                            [Button.text("💰 F1 car cost", resize=True), Button.text("📋 Telemetry", resize=True),
                              Button.text("📻 Team Radio", resize=True)],
 
                         ]
@@ -96,8 +96,8 @@ async def result_session(event: events.CallbackQuery.Event, circuitId_result: in
                             [Button.inline("🏁 FP1", data="FP1-" + str(circuitId_result)),
                              Button.inline("🏁 FP2", data="FP2-" + str(circuitId_result))],
                             [Button.inline("🏁 FP3", data="FP3-" + str(circuitId_result)),
-                             Button.inline("🏁 Q", data="Q-" + str(circuitId_result))],
-                            [Button.inline("🏁 S", data="S-" + str(circuitId_result)),
+                             Button.inline("🏁 Qualifying", data="Q-" + str(circuitId_result))],
+                            [Button.inline("🏁 Speed Race", data="S-" + str(circuitId_result)),
                              Button.inline("🏁 RACE", data="R-" + str(circuitId_result))],
                         ]
                         )
@@ -208,7 +208,7 @@ async def circuit(event):
     async with cSession.get(f"{Config['api_url']}/newschedule?year=2022&token={Config['api_token']}") as res:
         json = await res.json()
 
-        countries = {(circuit_['EventName'], circuit_['RoundNumber']) for circuit_ in json}
+        countries = {(circuit_['Country'], circuit_['RoundNumber']) for circuit_ in json}
 
         buttons = [
             Button.inline(country, f"circuitId_result {circuit_id}") for country, circuit_id, in countries
@@ -219,10 +219,10 @@ async def circuit(event):
 @client.on(events.NewMessage(pattern="🗓 Schedule"))
 async def schedule(event):
     print(event)
-    await event.respond("Get standings from:",
+    await event.respond("Get Schedule from:",
                         buttons=[
                             [Button.inline("📅 FULL CALENDAR 2022", data="schedule-2022")],
-                            [Button.inline("📅 NEXT Netherlands Grand Prix", data="schedule-next-15")],
+                            [Button.inline("📅 NEXT USA GP", data="schedule-next-19")],
                         ]
                         )
 
@@ -307,7 +307,7 @@ async def standing_constructor_info(event: events.CallbackQuery.Event):
         messages = [f"{data[0]}. {data[1]}" for data in drivers]
 
         await client.send_message(event.chat_id,
-                                  "🏆 The 2021 Formula 1 constructor standings:\n\n" + "\n".join(messages))
+                                  "🏆 The 2022 Formula 1 constructor standings:\n\n" + "\n".join(messages))
         await event.delete()
 
 
@@ -428,8 +428,8 @@ async def schedule_final(event: events.CallbackQuery.Event, RoundNumber: int):
         message += f"🚦 Session4 : {wanted_driver['Session4']} {wanted_driver['Session4Date']} {'UTC'}\n"
         message += f"🚦 Session5 : {wanted_driver['Session5']} {wanted_driver['Session5Date']} {'UTC'}\n"
 
-
-        await client.send_message(event.chat_id, message, force_document=True, buttons=[Button.url(f"INFO {wanted_driver['OfficialEventName']}  ", wanted_driver['url'])])
+        await client.send_message(event.chat_id, message, force_document=True, buttons=[
+            Button.url(f"INFO {wanted_driver['OfficialEventName']}  ", wanted_driver['url'])])
         await client.send_message(event.chat_id, message, force_document=True, buttons=allbuttons)
         await event.delete()
 
@@ -452,9 +452,12 @@ async def schedule_next(event: events.CallbackQuery.Event, RoundNumber: int):
         message += f"🚦 Session3 : {wanted_driver['Session3']} {wanted_driver['Session3Date']} {'UTC'}\n"
         message += f"🚦 Session4 : {wanted_driver['Session4']} {wanted_driver['Session4Date']} {'UTC'}\n"
         message += f"🚦 Session5 : {wanted_driver['Session5']} {wanted_driver['Session5Date']} {'UTC'}\n\n"
+        message += f"Get up to speed with everything you need to know about the 2022 Singapore Grand Prix, which takes place over 61 laps of the 5.063-kilometre Marina Bay Street Circuit on Sunday, October 2\n\n"
+
         message += f"RESULT AND INFO CLICK BUTTON BELOW\n"
-        #await client.send_message(event.chat_id, message, file=TEMP_IMAGE_DRIVER, force_document=False, buttons=[Button.url(f"INFO {wanted_driver['OfficialEventName']}  ", wanted_driver['url'])])
-        allbuttons = [Button.inline(wanted_driver['OfficialEventName'],f"circuitId_result {RoundNumber}")],[Button.url(f"INFO {wanted_driver['OfficialEventName']}  ", wanted_driver['url'])]
+        # await client.send_message(event.chat_id, message, file=TEMP_IMAGE_DRIVER, force_document=False, buttons=[Button.url(f"INFO {wanted_driver['OfficialEventName']}  ", wanted_driver['url'])])
+        allbuttons = [Button.inline(wanted_driver['OfficialEventName'], f"circuitId_result {RoundNumber}")], [
+            Button.url(f"INFO {wanted_driver['OfficialEventName']}  ", wanted_driver['url'])]
 
         # await client.send_message(event.chat_id, message, force_document=True, buttons=[Button.url(f"INFO {wanted_driver['OfficialEventName']}  ", wanted_driver['url'])])
         await client.send_message(event.chat_id, message, force_document=True, buttons=allbuttons)
@@ -463,24 +466,54 @@ async def schedule_next(event: events.CallbackQuery.Event, RoundNumber: int):
         await event.delete()
 
 
-@client.on(events.NewMessage(pattern="📋 Live Feed"))
+@client.on(events.NewMessage(pattern="📋 Telemetry"))
 async def circuit(event):
+    await event.respond("TELEMETRY DUTCH GP 2022:",
+                        buttons=[
+                            [Button.inline("TELEMETRY VER-RUS", data="telemetry-1")],
+                            [Button.inline("TELEMETRY VER-LEC", data="telemetry-2")],
+                            [Button.inline("STRATEGY", data="telemetry-3")],
+                            [Button.inline("VER-SPEED-IN-TRACK", data="telemetry-4")]
+
+                        ]
+                        )
+
     # async with cSession.get(f"{Config['api_url']}/results?year=2022&token={Config['api_token']}") as res:
-    async with cSession.get(f"{Config['api_url']}/livecomment?token={Config['api_token']}") as res:
-        json = await res.json()
-        list_live = []
-        for j in json:
-            print(j)
-            time = j.get('time')
-            content = j.get('content')
-            content = re.sub(r"http\S+", "", content)
-            content = str(content)
-            list_live.append(f"🕐{time} \n🏎️{content}")
+    # async with cSession.get(f"{Config['api_url']}/livecomment?token={Config['api_token']}") as res:
+    #    json = await res.json()
+    #    list_live = []
+    #    for j in json:
+    #        print(j)
+    #        time = j.get('time')
+    #        content = j.get('content')
+    #        content = re.sub(r"http\S+", "", content)
+    #        content = str(content)
+    #        list_live.append(f"🕐{time} \n🏎️{content}")
 
-        msg = f"📋 Live Feed\n\n"
-        msg += "\n\n".join(list_live)
+    #   msg = f"📋 Live Feed\n\n"
+    #   msg += "\n\n".join(list_live)
 
-        await event.respond(msg)
+    #  await event.respond(msg)
+
+
+async def telemetry(event: events.CallbackQuery.Event, telemetry: int):
+    print(telemetry)
+    if int(telemetry) == 1:
+        message = ""
+        # message += f"🏎️ Verstappen-Russell\n\n"
+        await client.send_message(event.chat_id, message, file="telemetry_1.png", force_document=False)
+    elif int(telemetry) == 2:
+        message = ""
+        # message += f"🏎️ Verstappen-Russell\n\n"
+        await client.send_message(event.chat_id, message, file="telemetry_2.png", force_document=False)
+    elif int(telemetry) == 3:
+        message = ""
+        message += f"🏎️ Race Strategy Dutch GP \n 🛞 SOFT RED \n 🛞 MEDIUM YELLOW \n 🛞 HARD WHITE \n 🛞 INTERMEDIATE GREEN \n 🛞 WET BLU"
+        await client.send_message(event.chat_id, message, file="telemetry_3.png", force_document=False)
+    elif int(telemetry) == 4:
+        message = ""
+        # message += f"🏎️ Race Strategy Dutch GP \n 🛞 SOFT RED \n 🛞 MEDIUM YELLOW \n 🛞 HARD WHITE \n 🛞 INTERMEDIATE GREEN \n 🛞 WET BLU"
+        await client.send_message(event.chat_id, message, file="telemetry_4.png", force_document=False)
 
 
 @client.on(events.NewMessage(pattern="📻 Team Radio"))
@@ -505,12 +538,45 @@ async def teamradio_final(event: events.CallbackQuery.Event):
         await event.delete()
 
 
+async def result_race_final(event: events.CallbackQuery.Event, circuit_id: str):
+    session_race = circuit_id.split("-")[0]
+    round = circuit_id.split("-")[-1]
+    year = 2022
+    async with cSession.get(
+            f"{Config['api_url']}/results?token={Config['api_token']}&year={year}&round={round}") as res:
+        json = await res.json(content_type=None)
+        print(json)
+        try:
+            if json[0]['id'] == 0:
+                await client.send_message(event.chat_id,
+                                      "❌ No data for this session! If this session only finished recently, please try again in a few minutes")
+                await event.delete()
+            else:
+
+                data = 2022
+
+                drivers = [(session_race['position'], f" {session_race['flag']} Time({session_race['lapTime']}) 🏎({session_race['points']})") for session_race in json]
+
+                # drivers = sorted(drivers, key=lambda x: x[1])
+
+                messages = [f"{data[0]} {data[1]}" for data in drivers]
+
+                await client.send_message(event.chat_id, f"🏆 The Race result:\n\n" + "\n".join(messages))
+                await event.delete()
+        except:
+            await client.send_message(event.chat_id,
+                                      "❌ No data for this session! If this session only finished recently, please try again in a few minutes")
+            await event.delete()
+
+
 async def result_session_final(event: events.CallbackQuery.Event, circuit_id: str):
     session_race = circuit_id.split("-")[0]
     event_race = circuit_id.split("-")[-1]
     year = 2022
-    print(f"{Config['api_url']}/faster_session?token={Config['api_token']}&year={year}&event_race={event_race}&session_race={session_race}")
-    async with cSession.get(f"{Config['api_url']}/faster_session?token={Config['api_token']}&year={year}&event_race={event_race}&session_race={session_race}") as res:
+    print(
+        f"{Config['api_url']}/faster_session?token={Config['api_token']}&year={year}&event_race={event_race}&session_race={session_race}")
+    async with cSession.get(
+            f"{Config['api_url']}/faster_session?token={Config['api_token']}&year={year}&event_race={event_race}&session_race={session_race}") as res:
         json = await res.json(content_type=None)
         if json[0]['id'] == "NO DATA":
             await client.send_message(event.chat_id,
@@ -519,13 +585,15 @@ async def result_session_final(event: events.CallbackQuery.Event, circuit_id: st
         else:
 
             data = 2022
-            drivers = [(session_race['flag'], f" 🕑Time({session_race['lapTime']}) 🛞Tires({session_race['compound']}) 🏎️({session_race['team']})") for session_race in json]
+            drivers = [(session_race['flag'],
+                        f" 🕑Time({session_race['lapTime']}) 🛞Tires({session_race['compound']}) 🏎️({session_race['team']})")
+                       for session_race in json]
 
-            #drivers = sorted(drivers, key=lambda x: x[1])
+            # drivers = sorted(drivers, key=lambda x: x[1])
 
             messages = [f"{data[0]} {data[1]}" for data in drivers]
 
-            await client.send_message(event.chat_id,f"🏆 The {session_race} result:\n\n" + "\n".join(messages))
+            await client.send_message(event.chat_id, f"🏆 The {session_race} result:\n\n" + "\n".join(messages))
             await event.delete()
 
 
@@ -573,12 +641,23 @@ async def button_handler(event):
         case ["schedule", RoundNumber]:
             await schedule_final(event, int(RoundNumber))
 
-        case ["schedule-next-15"]:
-            RoundNumber = 15
+        case ["schedule-next-16"]:
+            RoundNumber = 16
             await schedule_next(event, int(RoundNumber))
+        case ["schedule-next-17"]:
+            RoundNumber = 17
+            await schedule_next(event, int(RoundNumber))
+
+        case ["schedule-next-18"]:
+            RoundNumber = 18
+            await schedule_next(event, int(RoundNumber))
+
+        case ["schedule-next-19"]:
+            RoundNumber = 19
+            await schedule_next(event, int(RoundNumber))
+
         case ["team-radio-13"]:
             await teamradio_final(event)
-
 
         #####
 
@@ -635,7 +714,7 @@ async def button_handler(event):
             await result_session_final(event, data)
         case ["R-1"]:
             data = "R-1"
-            await result_session_final(event, data)
+            await result_race_final(event, data)
 
         case ["FP1-2"]:
             data = "FP1-2"
@@ -654,7 +733,7 @@ async def button_handler(event):
             await result_session_final(event, data)
         case ["R-2"]:
             data = "R-2"
-            await result_session_final(event, data)
+            await result_race_final(event, data)
 
         case ["FP1-3"]:
             data = "FP1-3"
@@ -673,7 +752,7 @@ async def button_handler(event):
             await result_session_final(event, data)
         case ["R-3"]:
             data = "R-3"
-            await result_session_final(event, data)
+            await result_race_final(event, data)
 
         case ["FP1-4"]:
             data = "FP1-4"
@@ -692,7 +771,7 @@ async def button_handler(event):
             await result_session_final(event, data)
         case ["R-4"]:
             data = "R-4"
-            await result_session_final(event, data)
+            await result_race_final(event, data)
 
         case ["FP1-5"]:
             data = "FP1-5"
@@ -711,7 +790,7 @@ async def button_handler(event):
             await result_session_final(event, data)
         case ["R-5"]:
             data = "R-5"
-            await result_session_final(event, data)
+            await result_race_final(event, data)
 
         case ["FP1-6"]:
             data = "FP1-6"
@@ -730,7 +809,7 @@ async def button_handler(event):
             await result_session_final(event, data)
         case ["R-6"]:
             data = "R-6"
-            await result_session_final(event, data)
+            await result_race_final(event, data)
 
         case ["FP1-7"]:
             data = "FP1-7"
@@ -749,7 +828,7 @@ async def button_handler(event):
             await result_session_final(event, data)
         case ["R-7"]:
             data = "R-7"
-            await result_session_final(event, data)
+            await result_race_final(event, data)
 
         case ["FP1-8"]:
             data = "FP1-8"
@@ -768,7 +847,7 @@ async def button_handler(event):
             await result_session_final(event, data)
         case ["R-8"]:
             data = "R-8"
-            await result_session_final(event, data)
+            await result_race_final(event, data)
 
         case ["FP1-9"]:
             data = "FP1-9"
@@ -787,7 +866,7 @@ async def button_handler(event):
             await result_session_final(event, data)
         case ["R-9"]:
             data = "R-9"
-            await result_session_final(event, data)
+            await result_race_final(event, data)
 
         case ["FP1-10"]:
             data = "FP1-10"
@@ -806,7 +885,7 @@ async def button_handler(event):
             await result_session_final(event, data)
         case ["R-10"]:
             data = "R-10"
-            await result_session_final(event, data)
+            await result_race_final(event, data)
 
         case ["FP1-11"]:
             data = "FP1-11"
@@ -825,7 +904,7 @@ async def button_handler(event):
             await result_session_final(event, data)
         case ["R-11"]:
             data = "R-11"
-            await result_session_final(event, data)
+            await result_race_final(event, data)
 
         case ["FP1-12"]:
             data = "FP1-12"
@@ -844,7 +923,7 @@ async def button_handler(event):
             await result_session_final(event, data)
         case ["R-12"]:
             data = "R-12"
-            await result_session_final(event, data)
+            await result_race_final(event, data)
 
         case ["FP1-13"]:
             data = "FP1-13"
@@ -863,7 +942,7 @@ async def button_handler(event):
             await result_session_final(event, data)
         case ["R-13"]:
             data = "R-13"
-            await result_session_final(event, data)
+            await result_race_final(event, data)
 
         case ["FP1-14"]:
             data = "FP1-14"
@@ -882,7 +961,7 @@ async def button_handler(event):
             await result_session_final(event, data)
         case ["R-14"]:
             data = "R-14"
-            await result_session_final(event, data)
+            await result_race_final(event, data)
 
         case ["FP1-15"]:
             data = "FP1-15"
@@ -901,7 +980,7 @@ async def button_handler(event):
             await result_session_final(event, data)
         case ["R-15"]:
             data = "R-15"
-            await result_session_final(event, data)
+            await result_race_final(event, data)
         case ["FP1-16"]:
             data = "FP1-16"
             await result_session_final(event, data)
@@ -919,7 +998,7 @@ async def button_handler(event):
             await result_session_final(event, data)
         case ["R-16"]:
             data = "R-16"
-            await result_session_final(event, data)
+            await result_race_final(event, data)
 
         case ["FP1-17"]:
             data = "FP1-17"
@@ -938,7 +1017,7 @@ async def button_handler(event):
             await result_session_final(event, data)
         case ["R-17"]:
             data = "R-17"
-            await result_session_final(event, data)
+            await result_race_final(event, data)
 
         case ["FP1-18"]:
             data = "FP1-18"
@@ -957,7 +1036,7 @@ async def button_handler(event):
             await result_session_final(event, data)
         case ["R-18"]:
             data = "R-18"
-            await result_session_final(event, data)
+            await result_race_final(event, data)
 
         case ["FP1-19"]:
             data = "FP1-19"
@@ -976,7 +1055,7 @@ async def button_handler(event):
             await result_session_final(event, data)
         case ["R-19"]:
             data = "R-19"
-            await result_session_final(event, data)
+            await result_race_final(event, data)
 
         case ["FP1-20"]:
             data = "FP1-20"
@@ -995,7 +1074,7 @@ async def button_handler(event):
             await result_session_final(event, data)
         case ["R-20"]:
             data = "R-20"
-            await result_session_final(event, data)
+            await result_race_final(event, data)
 
         case ["FP1-21"]:
             data = "FP1-21"
@@ -1014,7 +1093,7 @@ async def button_handler(event):
             await result_session_final(event, data)
         case ["R-21"]:
             data = "R-21"
-            await result_session_final(event, data)
+            await result_race_final(event, data)
 
         case ["FP1-22"]:
             data = "FP1-22"
@@ -1033,8 +1112,20 @@ async def button_handler(event):
             await result_session_final(event, data)
         case ["R-22"]:
             data = "R-22"
-            await result_session_final(event, data)
+            await result_race_final(event, data)
 
+        case ["telemetry-1"]:
+            data = "1"
+            await telemetry(event, data)
+        case ["telemetry-2"]:
+            data = "2"
+            await telemetry(event, data)
+        case ["telemetry-3"]:
+            data = "3"
+            await telemetry(event, data)
+        case ["telemetry-4"]:
+            data = "4"
+            await telemetry(event, data)
 
 
 async def main():
