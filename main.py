@@ -79,6 +79,7 @@ async def standing_info_select_year(event):
     print(event)
     await event.respond("Get standings from:",
                         buttons=[
+                            [Button.inline("📅 2022", data="2022"), Button.inline("📅 2023", data="2023")],
                             [Button.inline("📅 2021", data="2021"), Button.inline("📅 2020", data="2020")],
                             [Button.inline("📅 2019", data="2019"), Button.inline("📅 2018", data="2018")],
                             [Button.inline("📅 2017", data="2017"), Button.inline("📅 2016", data="2016")],
@@ -90,7 +91,6 @@ async def standing_info_select_year(event):
 # @client.on(events.NewMessage(pattern="🏁 Result"))
 async def result_session(event: events.CallbackQuery.Event, circuitId_result: int):
     # async def result_session(event):
-    print("CAZZO" + str(circuitId_result))
     await event.respond("Get standings from:",
                         buttons=[
                             [Button.inline("🏁 FP1", data="FP1-" + str(circuitId_result)),
@@ -108,6 +108,8 @@ async def standing_constructor_select_by_year(event):
     print(event)
     await event.respond("Get standings from:",
                         buttons=[
+                            [Button.inline("📅 2023", data="constructorId2023")],
+                            [Button.inline("📅 2022", data="constructorId2022")],
                             [Button.inline("📅 2021", data="constructorId2021"),
                              Button.inline("📅 2020", data="constructorId2020")],
                             [Button.inline("📅 2019", data="constructorId2019"),
@@ -122,7 +124,7 @@ async def standing_constructor_select_by_year(event):
 
 @client.on(events.NewMessage(pattern="🏎️ Constructor"))
 async def constructoronly(event):
-    async with cSession.get(f"{Config['api_url']}/constructorresults?year=2022&token={Config['api_token']}") as res:
+    async with cSession.get(f"{Config['api_url']}/constructorresults?year=2023&token={Config['api_token']}") as res:
         json = await res.json()
 
         countries = {(circuit_['name'], circuit_['constructorId']) for circuit_ in json}
@@ -137,7 +139,7 @@ async def constructoronly(event):
 
 @client.on(events.NewMessage(pattern="🏟️ Circuit"))
 async def circuit(event):
-    async with cSession.get(f"{Config['api_url']}/circuits?year=2022&token={Config['api_token']}") as res:
+    async with cSession.get(f"{Config['api_url']}/circuits?year=2023&token={Config['api_token']}") as res:
         json = await res.json()
 
         countries = {(circuit_['country'], circuit_['circuitId']) for circuit_ in json}
@@ -221,16 +223,16 @@ async def schedule(event):
     print(event)
     await event.respond("Get Schedule from:",
                         buttons=[
-                            [Button.inline("📅 FULL CALENDAR 2022", data="schedule-2022")],
-                            [Button.inline("📅 NEXT USA GP", data="schedule-next-19")],
+                            [Button.inline("📅 FULL CALENDAR 2023", data="schedule-2023")],
+                            [Button.inline("📅 NEXT Bahrain Grand Prix", data="schedule-next-01")],
                         ]
                         )
 
 
-@client.on(events.NewMessage(pattern="📅 FULL CALENDAR 2022"))
+@client.on(events.NewMessage(pattern="📅 FULL CALENDAR 2023"))
 async def schedule_year(event):
     print(event)
-    async with cSession.get(f"{Config['api_url']}/races?year=2022&token={Config['api_token']}") as res:
+    async with cSession.get(f"{Config['api_url']}/races?year=2023&token={Config['api_token']}") as res:
         json = await res.json()
 
         countries = {(circuit_['Country'], circuit_['RoundNumber']) for circuit_ in json}
@@ -268,7 +270,7 @@ async def circuit_info(event: events.CallbackQuery.Event, circuit_id: int):
 
 async def standing_info(event: events.CallbackQuery.Event):
     print(event.data)
-    async with cSession.get(f"{Config['api_url']}/driverstandings?year=2022&token={Config['api_token']}") as res:
+    async with cSession.get(f"{Config['api_url']}/driverstandings?year=2023&token={Config['api_token']}") as res:
         json = await res.json()
 
         drivers = [(driver['pos'], f"{driver['forename']} {driver['surname']} ({driver['points']})") for driver in json]
@@ -277,7 +279,7 @@ async def standing_info(event: events.CallbackQuery.Event):
 
         messages = [f"{data[0]}. {data[1]}" for data in drivers]
 
-        await client.send_message(event.chat_id, "🏆 The 2021 Formula 1 driver standings:\n\n" + "\n".join(messages))
+        await client.send_message(event.chat_id, "🏆 The 2023 Formula 1 driver standings:\n\n" + "\n".join(messages))
         await event.delete()
 
 
@@ -307,16 +309,16 @@ async def standing_constructor_info(event: events.CallbackQuery.Event):
         messages = [f"{data[0]}. {data[1]}" for data in drivers]
 
         await client.send_message(event.chat_id,
-                                  "🏆 The 2022 Formula 1 constructor standings:\n\n" + "\n".join(messages))
+                                  "🏆 The 2023 Formula 1 constructor standings:\n\n" + "\n".join(messages))
         await event.delete()
 
 
 async def standing_constructor_by_year(event: events.CallbackQuery.Event, data: int):
     print(data)
-    async with cSession.get(f"{Config['api_url']}/constructorresults?year={data}&token={Config['api_token']}") as res:
+    async with cSession.get(f"{Config['api_url']}/constructorstandings?year={data}&token={Config['api_token']}") as res:
         json = await res.json()
 
-        drivers = [(driver['pos'], f"{driver['name']} {driver['points']} ({driver['nationality']}) ") for driver in
+        drivers = [(driver['position'], f"{driver['constructorRef']} {driver['points']} ({driver['nationality']}) ") for driver in
                    json]
 
         print(drivers)
@@ -412,7 +414,7 @@ async def result_info(event: events.CallbackQuery.Event, circuit_id: int):
 
 async def schedule_final(event: events.CallbackQuery.Event, RoundNumber: int):
     print(RoundNumber)
-    async with cSession.get(f"{Config['api_url']}/races?year=2022&token={Config['api_token']}") as res:
+    async with cSession.get(f"{Config['api_url']}/races?year=2023&token={Config['api_token']}") as res:
         json = await res.json()
         for driver in json:
             if int(driver['RoundNumber']) == RoundNumber:
@@ -586,7 +588,8 @@ async def result_session_final(event: events.CallbackQuery.Event, circuit_id: st
 
             data = 2022
             drivers = [(session_race['flag'],
-                        f" 🕑Time({session_race['lapTime']}) 🛞Tires({session_race['compound']}) 🏎️({session_race['team']})")
+                        #f" 🕑Time({session_race['lapTime']}) 🛞Tires({session_race['compound']}) 🏎️({session_race['team']})")
+                        f" Time({session_race['lapTime']}) 🏎️({session_race['team']})")
                        for session_race in json]
 
             # drivers = sorted(drivers, key=lambda x: x[1])
@@ -612,7 +615,10 @@ async def button_handler(event):
 
         case ["circuit", circuit_id]:
             await circuit_info(event, int(circuit_id))
-
+        case ["2023"]:
+            await standing_info_by_year(event, int(data[0]))
+        case ["2022"]:
+            await standing_info_by_year(event, int(data[0]))
         case ["2021"]:
             await standing_info_by_year(event, int(data[0]))
         case ["2020"]:
@@ -635,7 +641,7 @@ async def button_handler(event):
         case ["circuitId_result", circuit_id]:
             await result_session(event, int(circuit_id))
 
-        case ["schedule-2022"]:
+        case ["schedule-2023"]:
             await schedule_year(event)
 
         case ["schedule", RoundNumber]:
@@ -667,6 +673,12 @@ async def button_handler(event):
         case ["constructor_by_year"]:
             await standing_constructor_select_by_year(event)
 
+        case ["constructorId2023"]:
+            data = 2023
+            await standing_constructor_by_year(event, int(data))
+        case ["constructorId2022"]:
+            data = 2022
+            await standing_constructor_by_year(event, int(data))
         case ["constructorId2021"]:
             data = 2021
             await standing_constructor_by_year(event, int(data))
